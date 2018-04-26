@@ -11,23 +11,19 @@ class WhoisTbotModel(models.Model):
 
     @staticmethod
     def update_domain(user_id, domain, exp_date=None, last_notif_date=None):
-        try:
-            r = WhoisTbotModel.objects.filter(user_id=user_id, domain=domain)
-            if r:
-                if exp_date:
-                    r[0].exp_date = exp_date
-                if last_notif_date:
-                    r[0].last_notif_date = last_notif_date
-                r[0].save()
-            else:
-                WhoisTbotModel(user_id=user_id,
-                               domain=domain,
-                               exp_date=exp_date,
-                               last_notif_date=datetime.datetime.now()
-                               ).save()
-        except Exception:
-            return False
-        return True
+        r = WhoisTbotModel.objects.filter(user_id=user_id, domain=domain)
+        if r:
+            if exp_date:
+                r[0].exp_date = exp_date
+            if last_notif_date:
+                r[0].last_notif_date = last_notif_date
+            r[0].save()
+        else:
+            WhoisTbotModel(user_id=user_id,
+                           domain=domain,
+                           exp_date=exp_date,
+                           last_notif_date=datetime.datetime.now()
+                           ).save()
 
     @staticmethod
     def list_notif():

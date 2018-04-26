@@ -1,11 +1,12 @@
-import json, threading, time
+import threading, time
+from django.conf import settings
 import logging
 import telegram
 
 from ..models import WhoisTbotModel
 from .whois import Whois
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG if settings.DEBUG else logging.INFO)
 
 class TBot:
     updater_thread = None
@@ -38,7 +39,6 @@ class TBot:
         except FileNotFoundError:
             self.bot.setWebhook(url)
 
-    #
     #   Remove binded webhook
     def delete_webhook_url(self):
         self.bot.deleteWebhook()
@@ -70,20 +70,20 @@ class TBot:
                             item["domain"],
                             item["exp_date"]
                         )
-                        res = self.bot.send_message(chat_id=key, text=text, parse_mode="html")
+                        # Send updates to user
+                        self.bot.send_message(chat_id=key, text=text, parse_mode="html")
 
                         # update last notif date
                         for item in value:
                             WhoisTbotModel.domain_notif(key, item["domain"])
 
                     except Exception:
-                        logging.exception("Sheduler exception")
+                        logging.exception("Sheduler user exception")
             except Exception:
                 logging.exception("Scheduler error:")
 
             time.sleep(60 * 60) #60 minutes interval
 
-    #
     #   Webhook update data handler
     def put_update(self, update):
         if "message" in update:
@@ -188,8 +188,6 @@ class TBot:
 
         return self.CmdResponse(text, self.DEFAULT_KEYBOARD)
 
-    #
-    #   Dispatch bot commands
     def _dispatch_cmd_help(self):
         return self.CmdResponse("/add [domain] - Отслеживать домен\n"
                "/remove [domain] - Убрать домен из отслеживаемых\n"

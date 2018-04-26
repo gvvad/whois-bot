@@ -4,8 +4,6 @@ import datetime
 
 
 class Whois(object):
-    def __init__(self, domain):
-        pass
 
     class Response(object):
         def __init__(self,

@@ -1,4 +1,5 @@
-from django.shortcuts import render
+#from django.shortcuts import render
+from django.conf import settings
 from django.http import HttpResponse
 from django.urls import path
 import logging
@@ -7,7 +8,7 @@ import os
 
 from .ex.tbot import TBot
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG if settings.DEBUG else logging.INFO)
 logging.info("tbot views START")
 
 try:

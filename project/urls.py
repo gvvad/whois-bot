@@ -7,7 +7,7 @@ import logging
 
 from whoisbot.views import add_path
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG if settings.DEBUG else logging.INFO)
 logging.info("urls.py START")
 
 def index(val):
