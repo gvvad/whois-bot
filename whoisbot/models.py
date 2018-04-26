@@ -1,5 +1,6 @@
 from django.db import models
-import datetime
+#import datetime
+from django.utils import timezone
 
 
 class WhoisTbotModel(models.Model):
@@ -22,13 +23,16 @@ class WhoisTbotModel(models.Model):
             WhoisTbotModel(user_id=user_id,
                            domain=domain,
                            exp_date=exp_date,
-                           last_notif_date=datetime.datetime.now()
+                           last_notif_date=timezone.now()
                            ).save()
 
     @staticmethod
     def list_notif():
-        delta_a = datetime.datetime.now() + datetime.timedelta(days=30)
-        delta_b = datetime.datetime.now() - datetime.timedelta(days=1)
+
+        #delta_a = datetime.datetime.now() + datetime.timedelta(days=30)
+        delta_a = timezone.now() + timezone.timedelta(days=30)
+        #delta_b = datetime.datetime.now() - datetime.timedelta(days=5)
+        delta_b = timezone.now() + timezone.timedelta(days=5)
 
         result = dict()
         for item in WhoisTbotModel.objects.filter(exp_date__lte=delta_a, last_notif_date__lte=delta_b):
@@ -40,7 +44,7 @@ class WhoisTbotModel(models.Model):
     def domain_notif(user_id, domain):
         r = WhoisTbotModel.objects.filter(user_id=user_id, domain=domain)
         if r:
-            r[0].last_notif_date = datetime.datetime.now()
+            r[0].last_notif_date = timezone.now()
             r[0].save()
 
     @staticmethod
