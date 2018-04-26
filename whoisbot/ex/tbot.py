@@ -3,7 +3,7 @@ from django.conf import settings
 import logging
 import telegram
 
-from ..models import WhoisTbotModel
+from ..models import WhoisTbotModel, TbotAwaitModel
 from .whois import Whois
 
 logging.basicConfig(level=logging.DEBUG if settings.DEBUG else logging.INFO)
@@ -13,7 +13,6 @@ class TBot:
     scheduler_thread = None
     storage = None
     token = ""
-    await = dict()
     DEFAULT_KEYBOARD = [["/add", "/remove"], ["/whois", "/stop"], ["/list"]]
 
     # Class for return result from cmd dispatcher
@@ -91,15 +90,13 @@ class TBot:
             res = ""
             user_id = int(update["message"]["from"]["id"])
 
-            if user_id in self.await:
-                if self.await[user_id] == "whois":
-                    del self.await[user_id]
+            await_mode = TbotAwaitModel.get_await(user_id)
+            if await_mode:
+                if await_mode == "whois":
                     res = self._dispatch_cmd_whois(user_id, *text.split(" "))
-                elif self.await[user_id] == "add":
-                    del self.await[user_id]
+                elif await_mode == "add":
                     res = self._dispatch_cmd_add(user_id, *text.split(" "))
-                elif self.await[user_id] == "remove":
-                    del self.await[user_id]
+                elif await_mode == "remove":
                     res = self._dispatch_cmd_remove(user_id, *text.split(" "))
             else:
                 cmd, *args = text.split(" ")
@@ -139,7 +136,7 @@ class TBot:
     def _dispatch_cmd_add(self, user_id, *domains):
         text = ""
         if not domains:
-            self.await[user_id] = "add"
+            TbotAwaitModel.set_await(user_id, "add")
             return self.CmdResponse("Введите доменное имя:")
         else:
             for item in domains:
@@ -156,7 +153,7 @@ class TBot:
     def _dispatch_cmd_remove(self, user_id, *domains):
         text = ""
         if not domains:
-            self.await[user_id] = "remove"
+            TbotAwaitModel.set_await(user_id, "remove")
             domains = [item["domain"] for item in WhoisTbotModel.list_domains(user_id)]
             col = 3
             buttons = [domains[n:n+col] for n in range(0, len(domains), col)]
@@ -173,7 +170,7 @@ class TBot:
     def _dispatch_cmd_whois(self, user_id, *domains):
         text = ""
         if not domains:
-            self.await[user_id] = "whois"
+            TbotAwaitModel.set_await(user_id, "whois")
             return self.CmdResponse("Введите доменное имя:")
         else:
             try:

@@ -2,6 +2,29 @@ from django.db import models
 #import datetime
 from django.utils import timezone
 
+class TbotAwaitModel(models.Model):
+    user_id = models.CharField(max_length=32)
+    await = models.CharField(max_length=32)
+
+    @staticmethod
+    def get_await(user_id, clr=True):
+        try:
+            r = TbotAwaitModel.objects.filter(user_id=user_id)
+            if r:
+                res = r[0].await
+                if clr:
+                    r.delete()
+                return res
+        except:
+            pass
+        return None
+
+    @staticmethod
+    def set_await(user_id, mode):
+        try:
+            TbotAwaitModel(user_id=user_id, await=mode).save()
+        except:
+            pass
 
 class WhoisTbotModel(models.Model):
     user_id = models.CharField(max_length=32)
