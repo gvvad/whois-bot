@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q, F, ExpressionWrapper
 #import datetime
 from django.utils import timezone
 
@@ -51,14 +52,30 @@ class WhoisTbotModel(models.Model):
 
     @staticmethod
     def list_notif():
+        t_now = timezone.now()
+        df_a = t_now + timezone.timedelta(days=90)
+        db_a = t_now - timezone.timedelta(days=60)
 
-        #delta_a = datetime.datetime.now() + datetime.timedelta(days=30)
-        delta_a = timezone.now() + timezone.timedelta(days=30)
-        #delta_b = datetime.datetime.now() - datetime.timedelta(days=5)
-        delta_b = timezone.now() + timezone.timedelta(days=5)
+        df_b = t_now + timezone.timedelta(days=30)
+        db_b = t_now - timezone.timedelta(days=15)
+
+        df_c = t_now + timezone.timedelta(days=15)
+        db_c = t_now - timezone.timedelta(days=8)
+
+        df_d = t_now + timezone.timedelta(days=7)
+        db_d = t_now - timezone.timedelta(days=6)
+
+        df_e = t_now + timezone.timedelta(days=1)
+        db_e = t_now - timezone.timedelta(days=1)
 
         result = dict()
-        for item in WhoisTbotModel.objects.filter(exp_date__lte=delta_a, last_notif_date__lte=delta_b):
+        for item in WhoisTbotModel.objects.\
+            filter(Q(exp_date__lte=df_a, last_notif_date__lte=db_a) |
+                   Q(exp_date__lte=df_b, last_notif_date__lte=db_b) |
+                   Q(exp_date__lte=df_c, last_notif_date__lte=db_c) |
+                   Q(exp_date__lte=df_d, last_notif_date__lte=db_d) |
+                   Q(exp_date__lte=df_e, last_notif_date__lte=db_e)
+                   ):
             result.setdefault(item.user_id, []).append({"domain": item.domain, "exp_date": item.exp_date})
 
         return result

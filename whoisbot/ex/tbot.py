@@ -1,4 +1,4 @@
-import threading, time
+import threading, time, datetime
 from django.conf import settings
 import logging
 import telegram
@@ -13,7 +13,7 @@ class TBot:
     scheduler_thread = None
     storage = None
     token = ""
-    DEFAULT_KEYBOARD = [["/add", "/remove"], ["/whois", "/stop"], ["/list"]]
+    DEFAULT_KEYBOARD = [["добавить", "удалить"], ["/whois", "остановить"], ["список"]]
 
     # Class for return result from cmd dispatcher
     class CmdResponse:
@@ -59,13 +59,14 @@ class TBot:
                             logging.exception("Scheduler")
                             pass
 
+                # Request from db who notifications need
                 r = WhoisTbotModel.list_notif()
                 for key, value in r.items():
                     try:
-                        text = "Уведомление о скорой окончании регистрации:"
+                        text = "Уведомление о скором окончании регистрации:"
 
                         for item in value:
-                            text += "<code>Домен: {}</code>\n<code>Дата окончания регистрации: {}</code>".format(
+                            text += "\n<code>Домен: {}</code>\n<code>Дата окончания регистрации: {}</code>".format(
                             item["domain"],
                             item["exp_date"]
                         )
@@ -82,6 +83,13 @@ class TBot:
                 logging.exception("Scheduler error:")
 
             time.sleep(60 * 60) #60 minutes interval
+
+    @staticmethod
+    def datetime_to_str(d):
+        try:
+            return d.strftime("%d.%m.%Y %H:%M:%S")
+        except Exception:
+            return "---"
 
     #   Webhook update data handler
     def put_update(self, update):
@@ -104,15 +112,15 @@ class TBot:
                     res = self._dispatch_cmd_help()
                 elif cmd == "/start":
                     res = self._dispatch_cmd_start(user_id)
-                elif cmd == "/stop":
+                elif cmd == "/stop" or cmd == "остановить":
                     res = self._dispatch_cmd_stop(user_id)
-                elif cmd == "/add":
+                elif cmd == "/add" or cmd == "добавить":
                     res = self._dispatch_cmd_add(user_id, *args)
-                elif cmd == "/remove":
+                elif cmd == "/remove" or cmd == "удалить":
                     res = self._dispatch_cmd_remove(user_id, *args)
                 elif cmd == "/whois":
                     res = self._dispatch_cmd_whois(user_id, *args)
-                elif cmd =="/list":
+                elif cmd == "/list" or cmd == "список":
                     res = self._dispatch_cmd_list(user_id)
                 else:
                     res = self._dispatch_cmd_unknown(user_id)
@@ -145,7 +153,10 @@ class TBot:
                     if not wh.exp_date:
                         raise Exception
                     WhoisTbotModel.update_domain(user_id, domain=wh.name, exp_date=wh.exp_date)
-                    text += "Домен {} добавлен.\n".format(item)
+                    text += "Домен {} истекает <code>{}</code>.\nМы будем уведомлять вас за 90 дней.".format(
+                        wh.name,
+                        TBot.datetime_to_str(wh.exp_date)
+                    )
                 except Exception:
                     text += "Домен {} не найден.\n".format(item)
         return self.CmdResponse(text, self.DEFAULT_KEYBOARD)
@@ -177,9 +188,9 @@ class TBot:
                 wh = Whois.query(domains[0])
                 text = "<code>Домен: {}</code>\n".format(wh.name)
                 text += "<code>Registrar: {}</code>\n".format(wh.registrar)
-                text += "<code>Дата создания: {}</code>\n".format(wh.create_date.strftime("%d.%m.%Y %H:%M:%S"))
-                text += "<code>Дата обновления: {}</code>\n".format(wh.update_date.strftime("%d.%m.%Y %H:%M:%S"))
-                text += "<code>Дата окончания регистрации: {}</code>\n".format(wh.exp_date.strftime("%d.%m.%Y %H:%M:%S"))
+                text += "<code>Дата создания: {}</code>\n".format(TBot.datetime_to_str(wh.create_date))
+                text += "<code>Дата обновления: {}</code>\n".format(TBot.datetime_to_str(wh.update_date))
+                text += "<code>Дата окончания регистрации: {}</code>\n".format(TBot.datetime_to_str(wh.exp_date))
             except Exception:
                 text = "<b>Доменное имя не найдено.</b>"
 
