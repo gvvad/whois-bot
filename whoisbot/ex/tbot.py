@@ -153,7 +153,7 @@ class TBot:
                     if not wh.exp_date:
                         raise Exception
                     WhoisTbotModel.update_domain(user_id, domain=wh.name, exp_date=wh.exp_date)
-                    text += "Домен {} истекает <code>{}</code>.\nМы будем уведомлять вас за 90 дней.".format(
+                    text += "Домен {} истекает <code>{}</code>.\nМы будем уведомлять вас за 90, 30, 15, 7, 1 день.".format(
                         wh.name,
                         TBot.datetime_to_str(wh.exp_date)
                     )
@@ -206,7 +206,7 @@ class TBot:
 
     def _dispatch_cmd_start(self, chat_id):
         r = self._dispatch_cmd_help()
-        r.text = "<b>Уведомления окончания регистрации доменов *.ua</b>\n" + r.text
+        r.text = "<b>Уведомления окончания регистрации доменных имен.</b>\n" + r.text
         return r
 
     def _dispatch_cmd_stop(self, chat_id):
